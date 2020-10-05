@@ -1,3 +1,5 @@
 .idea/
 test-script.py
 *.json
+*.log
+data/
