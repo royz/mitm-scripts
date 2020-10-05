@@ -19,22 +19,16 @@ class GetFlexTokens:
             'session-token': None,
             'frc-token': None,
             'instance-id': None,
-            'cookie': None
+            'cookies': None
         }
         self.data_complete = False
         self.num = 0
 
     def check_and_dump(self):
-        # check if all the data is acquired, save the data in a file if true
-        for value in self.account.values():
-            if not value:
-                return
-
-        with open(f'{int(time.time())}-{self.account["email"]}.json', encoding='utf-8') as f:
-            json.dump(self.account, f, indent=2)
+        filename = f'{int(time.time())}-{self.account["email"]}.json'
+        self.save_data(filename, self.account)
 
         ctx.log.info(f'cookies and tokens have been saved for user: {self.account["email"]}')
-        quit()
 
     def response(self, flow: http.HTTPFlow) -> None:
         self.num = self.num + 1
@@ -70,6 +64,7 @@ class GetFlexTokens:
                 logger.info(cookies)
             except Exception as e:
                 logger.error(e)
+        self.check_and_dump()
 
     def request(self, flow: http.HTTPFlow) -> None:
         self.num = self.num + 1
@@ -105,6 +100,20 @@ class GetFlexTokens:
                 self.account['session-id-time'] = cookies['session-id-time']
             except:
                 pass
+
+        # get instance id (referred as identi)
+        if 'https://tas-na-extern.amazon.com/person' in url:
+            try:
+                self.account['instance-id'] = flow.request.headers.get('x-flex-instance-id')
+            except:
+                pass
+
+            # get addition data about the user
+            try:
+                self.account['profile-data'] = json.loads(str(flow.response.content))['person']
+            except:
+                pass
+        self.check_and_dump()
 
     @staticmethod
     def save_data(filename, data):
