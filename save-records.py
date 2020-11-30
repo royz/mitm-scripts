@@ -1,3 +1,5 @@
+from typing import Dict
+
 from mitmproxy import http
 from mitmproxy import ctx
 import os
@@ -25,7 +27,12 @@ class GetFlexTokens:
         self.num = 0
 
     def check_and_dump(self):
-        filename = f'{int(time.time())}-{self.account["email"]}.json'
+        if not self.account['email']:
+            return
+        else:
+            os.makedirs(self.account['email'], exist_ok=True)
+
+        filename = os.path.join(os.path.dirname(__file__), str(self.account["email"]), f'{int(time.time())}.json')
         self.save_data(filename, self.account)
 
         ctx.log.info(f'cookies and tokens have been saved for user: {self.account["email"]}')
